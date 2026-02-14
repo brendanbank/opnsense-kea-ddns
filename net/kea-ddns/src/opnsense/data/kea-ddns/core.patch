@@ -1,21 +1,5 @@
-From 1e01697a44f69f16da7128a0bbd65f512775bc92 Mon Sep 17 00:00:00 2001
-From: Brendan Bank <brendan.bank@gmail.com>
-Date: Fri, 13 Feb 2026 08:21:06 +0100
-Subject: [PATCH] kea: add plugins_run hooks for DDNS plugin support
-
-Add two hook points to allow a plugin to inject DDNS configuration:
-- kea_dhcpv4_config: overlay per-subnet DDNS params into kea-dhcp4.conf
-- kea_ddns_generate: generate kea-dhcp-ddns.conf and toggle keactrl
-Also add kea-dhcp-ddns to syslog facilities.
----
- src/etc/inc/plugins.inc.d/kea.inc                | 16 +++++++++++++++-
- .../mvc/app/models/OPNsense/Kea/KeaDhcpv4.php    | 14 ++++++++++++++
- 2 files changed, 29 insertions(+), 1 deletion(-)
-
-diff --git a/src/etc/inc/plugins.inc.d/kea.inc b/src/etc/inc/plugins.inc.d/kea.inc
-index 654387e12..957639af8 100644
---- a/src/etc/inc/plugins.inc.d/kea.inc
-+++ b/src/etc/inc/plugins.inc.d/kea.inc
+--- a/etc/inc/plugins.inc.d/kea.inc
++++ b/etc/inc/plugins.inc.d/kea.inc
 @@ -160,6 +160,20 @@ function kea_configure_do($verbose = false)
              $keaDhcpv6->generateConfig();
          }
@@ -45,11 +29,9 @@ index 654387e12..957639af8 100644
 +    $logfacilities['kea'] = ['facility' => ['kea-dhcp4', 'kea-dhcp6', 'kea-ctrl-agent', 'kea-dhcp-ddns']];
      return $logfacilities;
  }
- 
-diff --git a/src/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv4.php b/src/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv4.php
-index f7f8e2164..615a6e5c0 100644
---- a/src/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv4.php
-+++ b/src/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv4.php
+
+--- a/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv4.php
++++ b/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv4.php
 @@ -292,6 +292,20 @@ class KeaDhcpv4 extends BaseModel
                  $cnf['Dhcp4']['hooks-libraries'][] = $record;
              }
@@ -71,6 +53,3 @@ index f7f8e2164..615a6e5c0 100644
          File::file_put_contents($target, json_encode($cnf, JSON_PRETTY_PRINT), 0600);
      }
  }
--- 
-2.50.1 (Apple Git-155)
-
