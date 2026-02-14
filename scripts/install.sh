@@ -47,6 +47,7 @@ cp -R "$PLUGIN_SRC/etc/inc/plugins.inc.d/kea_ddns.inc" "$CORE_SRC/etc/inc/plugin
 cp -R "$PLUGIN_SRC/opnsense/mvc/app/controllers/OPNsense/KeaDdns" "$CORE_SRC/opnsense/mvc/app/controllers/OPNsense/"
 cp -R "$PLUGIN_SRC/opnsense/mvc/app/models/OPNsense/KeaDdns" "$CORE_SRC/opnsense/mvc/app/models/OPNsense/"
 cp -R "$PLUGIN_SRC/opnsense/mvc/app/views/OPNsense/KeaDdns" "$CORE_SRC/opnsense/mvc/app/views/OPNsense/"
+cp "$PLUGIN_SRC/opnsense/service/templates/OPNsense/Syslog/local/keaddns.conf" "$CORE_SRC/opnsense/service/templates/OPNsense/Syslog/local/"
 echo "    Plugin files installed."
 
 # --- Step 3: Flush cache and restart ---

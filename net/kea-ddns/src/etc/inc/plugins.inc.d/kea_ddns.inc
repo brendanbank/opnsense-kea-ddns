@@ -119,5 +119,5 @@ function kea_ddns_services()
 
 function kea_ddns_syslog()
 {
-    return ['kea_ddns' => ['facility' => ['kea-dhcp-ddns']]];
+    return ['keaddns' => ['facility' => ['kea-dhcp-ddns']]];
 }
