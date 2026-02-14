@@ -57,3 +57,9 @@ configctl template reload OPNsense/Syslog 2>/dev/null || true
 echo ""
 echo "==> Done! Navigate to Services > Kea DDNS in the web UI."
 echo "    Run 'configctl kea restart' to apply changes."
+
+# --- Step 4: Run functional tests ---
+echo ""
+echo "==> Running functional tests..."
+echo ""
+sh "$SCRIPT_DIR/functional_test.sh"
