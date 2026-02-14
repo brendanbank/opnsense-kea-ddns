@@ -19,4 +19,4 @@ Added:
 * kea-dhcp-ddns daemon configuration generation
 * Log file viewer for kea-dhcp-ddns
 
-WWW: https://github.com/brendanbank/opnsense-plugins
+WWW: https://github.com/brendanbank/opnsense-kea-ddns
