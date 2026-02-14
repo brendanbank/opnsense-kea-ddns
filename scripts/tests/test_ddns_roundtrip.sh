@@ -1,12 +1,16 @@
 # Test: DDNS round-trip (section 11)
 # Adds a synthetic lease, triggers DDNS, verifies DNS, then cleans up.
 
-TEST_IP="10.2.200.250"
 TEST_MAC="de:ad:be:ef:00:01"
 
-# Pick the first DDNS-enabled subnet on the test IP's network
-TEST_SUBNET_ID=$(jq -r '[.Dhcp4.subnet4[] | select(.["ddns-send-updates"] == true and .subnet == "10.2.200.0/24")][0].id' < "$KEA4_CONF" 2>/dev/null)
-TEST_SUFFIX=$(jq -r '[.Dhcp4.subnet4[] | select(.["ddns-send-updates"] == true and .subnet == "10.2.200.0/24")][0]["ddns-qualifying-suffix"]' < "$KEA4_CONF" 2>/dev/null)
+# Pick the first DDNS-enabled subnet and derive a test IP from it
+TEST_SUBNET_ID=$(jq -r '[.Dhcp4.subnet4[] | select(.["ddns-send-updates"] == true)][0].id' < "$KEA4_CONF" 2>/dev/null)
+TEST_SUFFIX=$(jq -r '[.Dhcp4.subnet4[] | select(.["ddns-send-updates"] == true)][0]["ddns-qualifying-suffix"]' < "$KEA4_CONF" 2>/dev/null)
+TEST_CIDR=$(jq -r '[.Dhcp4.subnet4[] | select(.["ddns-send-updates"] == true)][0].subnet' < "$KEA4_CONF" 2>/dev/null)
+
+# Derive test IP: use .254 in the first /24-aligned block of the subnet
+TEST_NET=$(echo "$TEST_CIDR" | cut -d/ -f1 | awk -F. '{print $1"."$2"."$3}')
+TEST_IP="${TEST_NET}.254"
 TEST_SUFFIX="${TEST_SUFFIX%.}"
 TEST_HOSTNAME="keaddns-functest.${TEST_SUFFIX}"
 
@@ -14,10 +18,11 @@ TEST_HOSTNAME="keaddns-functest.${TEST_SUFFIX}"
 TSIG_NAME=$(jq -r '.DhcpDdns["tsig-keys"][0].name' < "$DDNS_CONF" 2>/dev/null)
 TSIG_ALGO=$(jq -r '.DhcpDdns["tsig-keys"][0].algorithm' < "$DDNS_CONF" 2>/dev/null)
 TSIG_SECRET=$(jq -r '.DhcpDdns["tsig-keys"][0].secret' < "$DDNS_CONF" 2>/dev/null)
-FWD_ZONE=$(jq -r '.DhcpDdns["forward-ddns"]["ddns-domains"][0].name' < "$DDNS_CONF" 2>/dev/null)
-REV_ZONE=$(jq -r '.DhcpDdns["reverse-ddns"]["ddns-domains"][0].name' < "$DDNS_CONF" 2>/dev/null)
+FWD_ZONE=$(jq -r --arg suffix "${TEST_SUFFIX}." '.DhcpDdns["forward-ddns"]["ddns-domains"][] | select(.name == $suffix) | .name' < "$DDNS_CONF" 2>/dev/null)
+# Derive reverse zone from test IP: 10.0.10.254 -> 10.0.10.in-addr.arpa.
+REV_ZONE=$(echo "$TEST_IP" | awk -F. '{print $3"."$2"."$1".in-addr.arpa."}')
 
-# Build the reverse name: 10.2.200.250 -> 250.200.2.10.in-addr.arpa
+# Build the reverse name: 10.0.10.254 -> 254.10.0.10.in-addr.arpa
 TEST_PTR=$(echo "$TEST_IP" | awk -F. '{print $4"."$3"."$2"."$1}').in-addr.arpa
 
 ddns_cleanup() {
