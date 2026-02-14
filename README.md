@@ -9,11 +9,10 @@ plugin itself.
 
 ## Background
 
-OPNsense core does not yet support Kea DHCP-DDNS. The upstream PR
-([opnsense/core#9401](https://github.com/opnsense/core/pull/9401)) is stalled
-due to scope concerns. This repo packages a working implementation as a
-standalone plugin with a minimal core patch, suitable for self-hosted
-deployments.
+OPNsense core does not yet support Kea DHCP-DDNS. There is an open upstream PR
+([opnsense/core#9401](https://github.com/opnsense/core/pull/9401)) to add this
+to core. This repo packages a working implementation as a standalone plugin with
+a minimal core patch, suitable for self-hosted deployments.
 
 ## Features
 
