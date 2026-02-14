@@ -33,3 +33,36 @@ if [ -n "$REV_SAMPLE" ]; then
         fi
     done
 fi
+
+# --- 9b. DNS forward lookups for v6 leases (AAAA) ---
+if [ "$KEA6_VALID" = "true" ] && [ -n "$LEASES6_JSON" ]; then
+    FWD6_SAMPLE=$(echo "$LEASES6_JSON" | jq -r '[.arguments.leases[] | select(.["fqdn-fwd"] == true)] | .[0:5][] | "\(.hostname) \(.["ip-address"])"' 2>/dev/null)
+
+    if [ -n "$FWD6_SAMPLE" ]; then
+        echo "$FWD6_SAMPLE" | while IFS=' ' read -r hostname ip; do
+            [ -z "$hostname" ] && continue
+            RESOLVED=$(dig +short AAAA "$hostname" "@$DNS_SERVER" 2>/dev/null | head -1)
+            if [ "$RESOLVED" = "$ip" ]; then
+                pass "DNS forward v6: $hostname -> $ip (AAAA)"
+            else
+                fail "DNS forward v6: expected $ip for $hostname, got ${RESOLVED:-NXDOMAIN}"
+            fi
+        done
+    fi
+
+    # --- 10b. DNS reverse lookups for v6 leases (ip6.arpa PTR) ---
+    REV6_SAMPLE=$(echo "$LEASES6_JSON" | jq -r '[.arguments.leases[] | select(.["fqdn-rev"] == true)] | .[0:5][] | "\(.hostname) \(.["ip-address"])"' 2>/dev/null)
+
+    if [ -n "$REV6_SAMPLE" ]; then
+        echo "$REV6_SAMPLE" | while IFS=' ' read -r hostname ip; do
+            [ -z "$ip" ] && continue
+            RESOLVED=$(dig +short -x "$ip" "@$DNS_SERVER" 2>/dev/null | head -1)
+            EXPECTED="${hostname%.}."
+            if [ "$RESOLVED" = "$EXPECTED" ]; then
+                pass "DNS reverse v6: $ip -> $hostname (ip6.arpa PTR)"
+            else
+                fail "DNS reverse v6: expected $hostname for $ip, got ${RESOLVED:-NXDOMAIN}"
+            fi
+        done
+    fi
+fi

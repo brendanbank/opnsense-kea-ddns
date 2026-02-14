@@ -67,3 +67,30 @@ if [ "$REV_LEASE_COUNT" -gt 0 ] 2>/dev/null; then
 else
     fail "Leases: no leases with fqdn-rev=true"
 fi
+
+# --- 8b. Active v6 leases have DDNS flags ---
+LEASES6_JSON=""
+if [ "$KEA6_VALID" = "true" ]; then
+    LEASES6_JSON=$(kea_command "$KEA6_SOCK" '{"command": "lease6-get-all"}')
+    LEASE6_COUNT=$(echo "$LEASES6_JSON" | jq '.arguments.leases | length' 2>/dev/null)
+    FWD_LEASE6_COUNT=$(echo "$LEASES6_JSON" | jq '[.arguments.leases[] | select(.["fqdn-fwd"] == true)] | length' 2>/dev/null)
+    REV_LEASE6_COUNT=$(echo "$LEASES6_JSON" | jq '[.arguments.leases[] | select(.["fqdn-rev"] == true)] | length' 2>/dev/null)
+
+    if [ "$LEASE6_COUNT" -gt 0 ] 2>/dev/null; then
+        pass "Leases v6: $LEASE6_COUNT active lease(s)"
+    else
+        fail "Leases v6: no active leases found"
+    fi
+
+    if [ "$FWD_LEASE6_COUNT" -gt 0 ] 2>/dev/null; then
+        pass "Leases v6: $FWD_LEASE6_COUNT lease(s) with fqdn-fwd=true"
+    else
+        fail "Leases v6: no leases with fqdn-fwd=true"
+    fi
+
+    if [ "$REV_LEASE6_COUNT" -gt 0 ] 2>/dev/null; then
+        pass "Leases v6: $REV_LEASE6_COUNT lease(s) with fqdn-rev=true"
+    else
+        fail "Leases v6: no leases with fqdn-rev=true"
+    fi
+fi
