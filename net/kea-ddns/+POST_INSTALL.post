@@ -1,4 +1,3 @@
-#!/bin/sh
 PATCH="/usr/local/opnsense/data/kea-ddns/core.patch"
 KEA_INC="/usr/local/etc/inc/plugins.inc.d/kea.inc"
 
