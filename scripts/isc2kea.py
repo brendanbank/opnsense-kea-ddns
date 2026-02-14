@@ -352,7 +352,7 @@ class KeaMigrator:
         log.info('=== Migration complete for %s ===', cfg.interface)
         log.info('Remember to manually disable ISC DHCP for interface %s', cfg.interface)
 
-def _print_summary(self, cfg: DhcpInterfaceConfig):
+    def _print_summary(self, cfg: DhcpInterfaceConfig):
         log.info('Interface: %s', cfg.interface)
         log.info('Subnet: %s', cfg.subnet)
         log.info('IP: %s', cfg.ipaddr)
