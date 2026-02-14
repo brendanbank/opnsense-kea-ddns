@@ -1,8 +1,27 @@
-PATCH="/usr/local/opnsense/data/kea-ddns/core.patch"
 KEA_INC="/usr/local/etc/inc/plugins.inc.d/kea.inc"
+VERSION_FILE="/usr/local/opnsense/version/core"
+PATCH_DIR="/usr/local/opnsense/data/kea-ddns/patches"
+
+# detect OPNsense series
+SERIES=""
+if [ -f "$VERSION_FILE" ]; then
+    SERIES=$(sed -n 's/.*"product_series"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$VERSION_FILE")
+fi
+
+if [ -z "$SERIES" ]; then
+    echo "WARNING: Could not detect OPNsense series from $VERSION_FILE"
+    exit 0
+fi
+
+PATCH="$PATCH_DIR/$SERIES.patch"
+
+if [ ! -f "$PATCH" ]; then
+    echo "WARNING: No patch file for OPNsense series $SERIES ($PATCH not found)"
+    exit 0
+fi
 
 if ! grep -q 'kea_ddns_generate' "$KEA_INC" 2>/dev/null; then
-    echo "Applying kea-ddns core hooks patch..."
+    echo "Applying kea-ddns core hooks patch for OPNsense $SERIES..."
     cd /usr/local && patch --forward --strip=1 < "$PATCH" || \
         echo "WARNING: Core patch failed. Apply manually: cd /usr/local && patch -p1 < $PATCH"
 fi

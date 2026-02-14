@@ -29,10 +29,51 @@
 
 function kea_ddns_run()
 {
+    kea_ddns_check_core_patch();
+
     return [
         'kea_dhcpv4_config' => 'kea_ddns_get_dhcpv4_overlay',
         'kea_ddns_generate' => 'kea_ddns_generate_config',
     ];
+}
+
+function kea_ddns_check_core_patch()
+{
+    $kea_inc = '/usr/local/etc/inc/plugins.inc.d/kea.inc';
+    if (strpos(@file_get_contents($kea_inc), 'kea_ddns_generate') !== false) {
+        return;
+    }
+
+    $version_file = '/usr/local/opnsense/version/core';
+    $patch_dir = '/usr/local/opnsense/data/kea-ddns/patches';
+
+    $series = '';
+    $version_json = @file_get_contents($version_file);
+    if ($version_json !== false) {
+        $version = @json_decode($version_json, true);
+        if (isset($version['product_series'])) {
+            $series = $version['product_series'];
+        }
+    }
+
+    if (empty($series)) {
+        syslog(LOG_WARNING, 'kea-ddns: cannot detect OPNsense series, skipping core patch check');
+        return;
+    }
+
+    $patch = sprintf('%s/%s.patch', $patch_dir, $series);
+    if (!file_exists($patch)) {
+        syslog(LOG_WARNING, sprintf('kea-ddns: no patch file for OPNsense series %s (%s)', $series, $patch));
+        return;
+    }
+
+    syslog(LOG_NOTICE, sprintf('kea-ddns: core patch missing, re-applying for OPNsense %s', $series));
+    $ret = mwexec(sprintf('/usr/bin/patch --forward --strip=1 --directory=/usr/local < %s', escapeshellarg($patch)));
+    if ($ret == 0) {
+        syslog(LOG_NOTICE, 'kea-ddns: core patch applied successfully');
+    } else {
+        syslog(LOG_ERR, 'kea-ddns: core patch failed, manual intervention required');
+    }
 }
 
 function kea_ddns_get_dhcpv4_overlay()

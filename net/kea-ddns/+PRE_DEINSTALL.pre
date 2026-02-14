@@ -1,5 +1,24 @@
-PATCH="/usr/local/opnsense/data/kea-ddns/core.patch"
+VERSION_FILE="/usr/local/opnsense/version/core"
+PATCH_DIR="/usr/local/opnsense/data/kea-ddns/patches"
 
-echo "Reversing kea-ddns core hooks patch..."
+# detect OPNsense series
+SERIES=""
+if [ -f "$VERSION_FILE" ]; then
+    SERIES=$(sed -n 's/.*"product_series"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$VERSION_FILE")
+fi
+
+if [ -z "$SERIES" ]; then
+    echo "WARNING: Could not detect OPNsense series from $VERSION_FILE"
+    exit 0
+fi
+
+PATCH="$PATCH_DIR/$SERIES.patch"
+
+if [ ! -f "$PATCH" ]; then
+    echo "WARNING: No patch file for OPNsense series $SERIES ($PATCH not found)"
+    exit 0
+fi
+
+echo "Reversing kea-ddns core hooks patch for OPNsense $SERIES..."
 cd /usr/local && patch --reverse --strip=1 < "$PATCH" 2>/dev/null || \
     echo "NOTE: Core patch could not be reversed (may already be removed or OPNsense was updated)."
