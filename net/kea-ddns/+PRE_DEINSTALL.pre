@@ -1,0 +1,6 @@
+#!/bin/sh
+PATCH="/usr/local/opnsense/data/kea-ddns/core.patch"
+
+echo "Reversing kea-ddns core hooks patch..."
+cd /usr/local && patch --reverse --strip=1 < "$PATCH" 2>/dev/null || \
+    echo "NOTE: Core patch could not be reversed (may already be removed or OPNsense was updated)."

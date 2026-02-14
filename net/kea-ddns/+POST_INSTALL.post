@@ -1,0 +1,9 @@
+#!/bin/sh
+PATCH="/usr/local/opnsense/data/kea-ddns/core.patch"
+KEA_INC="/usr/local/etc/inc/plugins.inc.d/kea.inc"
+
+if ! grep -q 'kea_ddns_generate' "$KEA_INC" 2>/dev/null; then
+    echo "Applying kea-ddns core hooks patch..."
+    cd /usr/local && patch --forward --strip=1 < "$PATCH" || \
+        echo "WARNING: Core patch failed. Apply manually: cd /usr/local && patch -p1 < $PATCH"
+fi
