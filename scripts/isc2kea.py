@@ -219,10 +219,10 @@ class IscDhcpParser:
 # ---------------------------------------------------------------------------
 
 class KeaApiClient:
-    """Wrapper for the OPNsense Kea DHCP API."""
+    """Wrapper for the OPNsense Kea DHCP and Kea DDNS APIs."""
 
     def __init__(self, host: str, api_key: str, api_secret: str):
-        self.base_url = f'https://{host}/api/kea'
+        self.base_url = f'https://{host}/api'
         self.auth = (api_key, api_secret)
         self.session = requests.Session()
         self.session.auth = self.auth
@@ -242,60 +242,78 @@ class KeaApiClient:
         r.raise_for_status()
         return r.json()
 
-    # -- General settings ---------------------------------------------------
+    # -- Kea DHCPv4 general settings ----------------------------------------
 
     def get_settings(self) -> dict:
-        return self._get('/dhcpv4/get')
+        return self._get('/kea/dhcpv4/get')
 
     def set_settings(self, data: dict) -> dict:
-        return self._post('/dhcpv4/set', {'dhcpv4': data})
+        return self._post('/kea/dhcpv4/set', {'dhcpv4': data})
 
-    # -- Subnets ------------------------------------------------------------
+    # -- Kea DHCPv4 subnets -------------------------------------------------
 
     def search_subnets(self) -> list:
-        resp = self._post('/dhcpv4/searchSubnet', {'rowCount': -1, 'current': 1})
+        resp = self._post('/kea/dhcpv4/searchSubnet', {'rowCount': -1, 'current': 1})
         return resp.get('rows', [])
 
     def add_subnet(self, data: dict) -> dict:
-        return self._post('/dhcpv4/addSubnet', {'subnet4': data})
+        return self._post('/kea/dhcpv4/addSubnet', {'subnet4': data})
 
     def set_subnet(self, uuid: str, data: dict) -> dict:
-        return self._post(f'/dhcpv4/setSubnet/{uuid}', {'subnet4': data})
+        return self._post(f'/kea/dhcpv4/setSubnet/{uuid}', {'subnet4': data})
 
     def get_subnet(self, uuid: str) -> dict:
-        return self._get(f'/dhcpv4/getSubnet/{uuid}')
+        return self._get(f'/kea/dhcpv4/getSubnet/{uuid}')
 
-    # -- Reservations -------------------------------------------------------
+    # -- Kea DHCPv4 reservations --------------------------------------------
 
     def search_reservations(self) -> list:
-        resp = self._post('/dhcpv4/searchReservation', {'rowCount': -1, 'current': 1})
+        resp = self._post('/kea/dhcpv4/searchReservation', {'rowCount': -1, 'current': 1})
         return resp.get('rows', [])
 
     def add_reservation(self, data: dict) -> dict:
-        return self._post('/dhcpv4/addReservation', {'reservation': data})
+        return self._post('/kea/dhcpv4/addReservation', {'reservation': data})
 
-    # -- DDNS keys ----------------------------------------------------------
+    # -- Kea DDNS TSIG keys (via keaddns plugin) ----------------------------
 
-    def search_ddns_keys(self) -> list:
-        resp = self._post('/dhcpv4/searchDdnsKey', {'rowCount': -1, 'current': 1})
+    def search_tsig_keys(self) -> list:
+        resp = self._post('/keaddns/general/searchTsigKey', {'rowCount': -1, 'current': 1})
         return resp.get('rows', [])
 
-    def add_ddns_key(self, data: dict) -> dict:
-        return self._post('/dhcpv4/addDdnsKey', {'ddns_key': data})
+    def add_tsig_key(self, data: dict) -> dict:
+        return self._post('/keaddns/general/addTsigKey', {'tsig_key': data})
 
-    # -- DDNS domains -------------------------------------------------------
+    # -- Kea DDNS forward zones (via keaddns plugin) ------------------------
 
-    def search_ddns_domains(self) -> list:
-        resp = self._post('/dhcpv4/searchDdnsDomain', {'rowCount': -1, 'current': 1})
+    def search_forward_zones(self) -> list:
+        resp = self._post('/keaddns/general/searchForwardZone', {'rowCount': -1, 'current': 1})
         return resp.get('rows', [])
 
-    def add_ddns_domain(self, data: dict) -> dict:
-        return self._post('/dhcpv4/addDdnsDomain', {'ddns_domain': data})
+    def add_forward_zone(self, data: dict) -> dict:
+        return self._post('/keaddns/general/addForwardZone', {'zone': data})
+
+    # -- Kea DDNS reverse zones (via keaddns plugin) ------------------------
+
+    def search_reverse_zones(self) -> list:
+        resp = self._post('/keaddns/general/searchReverseZone', {'rowCount': -1, 'current': 1})
+        return resp.get('rows', [])
+
+    def add_reverse_zone(self, data: dict) -> dict:
+        return self._post('/keaddns/general/addReverseZone', {'zone': data})
+
+    # -- Kea DDNS subnet assignments (via keaddns plugin) -------------------
+
+    def search_subnet_ddns(self) -> list:
+        resp = self._post('/keaddns/general/searchSubnetDdns', {'rowCount': -1, 'current': 1})
+        return resp.get('rows', [])
+
+    def add_subnet_ddns(self, data: dict) -> dict:
+        return self._post('/keaddns/general/addSubnetDdns', {'assignment': data})
 
     # -- Service ------------------------------------------------------------
 
     def reconfigure(self) -> dict:
-        return self._post('/service/reconfigure')
+        return self._post('/kea/service/reconfigure')
 
 
 # ---------------------------------------------------------------------------
@@ -321,26 +339,31 @@ class KeaMigrator:
         # Step 1: Ensure interface is in Kea general.interfaces
         self._ensure_interface(cfg.interface)
 
-        # Step 2-3: DDNS key and domain (if DDNS enabled)
-        ddns_domain_uuid = ''
+        # Step 2-4: DDNS key, forward zone, reverse zone (if DDNS enabled)
+        fwd_zone_uuid = ''
         if cfg.ddns_enable and cfg.ddns_forward_zone:
             key_uuid = self._ensure_ddns_key(cfg)
-            ddns_domain_uuid = self._ensure_ddns_domain(cfg, key_uuid, reverse_zone)
+            fwd_zone_uuid = self._ensure_forward_zone(cfg, key_uuid)
+            self._ensure_reverse_zone(cfg, key_uuid, reverse_zone)
 
-        # Step 4: Create subnet
-        subnet_uuid = self._create_subnet(cfg, ddns_domain_uuid)
+        # Step 5: Create subnet
+        subnet_uuid = self._create_subnet(cfg)
 
-        # Step 5: Create static reservations
+        # Step 6: Create subnet DDNS assignment
+        if fwd_zone_uuid and subnet_uuid:
+            self._create_subnet_ddns(cfg, subnet_uuid, fwd_zone_uuid)
+
+        # Step 7: Create static reservations
         self._create_reservations(cfg, subnet_uuid)
 
-        # Step 6: Warn about custom options
+        # Step 8: Warn about custom options
         if cfg.number_options:
             log.warning('Interface has %d custom DHCP options that need manual migration:',
                         len(cfg.number_options))
             for opt in cfg.number_options:
                 log.warning('  Option %s (type=%s): %s', opt.number, opt.type, opt.value)
 
-        # Step 7: Reconfigure
+        # Step 9: Reconfigure
         if not no_reconfigure:
             if self.dry_run:
                 log.info('[DRY RUN] Would reconfigure Kea service')
@@ -401,14 +424,14 @@ class KeaMigrator:
             cfg.ddns_domainalgorithm.lower(), 'HMAC-SHA256')
 
         if self.dry_run:
-            log.info('[DRY RUN] Would ensure DDNS key: %s (algo=%s)', cfg.ddns_domainkeyname,
+            log.info('[DRY RUN] Would ensure TSIG key: %s (algo=%s)', cfg.ddns_domainkeyname,
                      algorithm)
             return 'dry-run-key-uuid'
 
-        existing = self.api.search_ddns_keys()
+        existing = self.api.search_tsig_keys()
         for key_row in existing:
             if key_row.get('name') == cfg.ddns_domainkeyname:
-                log.info('DDNS key %r already exists (uuid=%s)', cfg.ddns_domainkeyname,
+                log.info('TSIG key %r already exists (uuid=%s)', cfg.ddns_domainkeyname,
                          key_row['uuid'])
                 return key_row['uuid']
 
@@ -418,51 +441,85 @@ class KeaMigrator:
             'secret': cfg.ddns_domainkey,
         }
 
-        log.info('Creating DDNS key: %s (algo=%s)', cfg.ddns_domainkeyname, algorithm)
-        resp = self.api.add_ddns_key(key_data)
-        self._check_response(resp, 'add DDNS key')
+        log.info('Creating TSIG key: %s (algo=%s)', cfg.ddns_domainkeyname, algorithm)
+        resp = self.api.add_tsig_key(key_data)
+        self._check_response(resp, 'add TSIG key')
         uuid = resp.get('uuid', '')
-        log.info('Created DDNS key uuid=%s', uuid)
+        log.info('Created TSIG key uuid=%s', uuid)
         return uuid
 
-    def _ensure_ddns_domain(self, cfg: DhcpInterfaceConfig, key_uuid: str,
-                            reverse_zone: str) -> str:
-        """Find or create the DDNS domain. Returns UUID."""
+    def _ensure_forward_zone(self, cfg: DhcpInterfaceConfig, key_uuid: str) -> str:
+        """Find or create the forward DNS zone. Returns UUID."""
         if self.dry_run:
-            log.info('[DRY RUN] Would ensure DDNS domain: zone=%s server=%s',
+            log.info('[DRY RUN] Would ensure forward zone: %s server=%s',
                      cfg.ddns_forward_zone, cfg.ddns_domainprimary)
-            return 'dry-run-domain-uuid'
+            return 'dry-run-fwd-zone-uuid'
 
-        existing = self.api.search_ddns_domains()
-        for dom_row in existing:
-            if dom_row.get('forward_zone') == cfg.ddns_forward_zone:
-                log.info('DDNS domain for zone %r already exists (uuid=%s)',
-                         cfg.ddns_forward_zone, dom_row['uuid'])
-                return dom_row['uuid']
+        existing = self.api.search_forward_zones()
+        for row in existing:
+            if row.get('name') == cfg.ddns_forward_zone:
+                log.info('Forward zone %r already exists (uuid=%s)',
+                         cfg.ddns_forward_zone, row['uuid'])
+                return row['uuid']
 
-        domain_data = {
+        zone_data = {
             'name': cfg.ddns_forward_zone,
-            'forward_zone': cfg.ddns_forward_zone,
-            'forward_server': cfg.ddns_domainprimary,
-            'forward_server_port': '53',
-            'forward_tsig_key': key_uuid,
-            'reverse_enabled': '1',
-            'reverse_server': cfg.ddns_domainprimary,
-            'reverse_server_port': '53',
+            'server': cfg.ddns_domainprimary,
+            'port': '53',
+            'tsig_key': key_uuid,
         }
 
-        if reverse_zone:
-            domain_data['reverse_zone'] = reverse_zone
-
-        log.info('Creating DDNS domain: zone=%s server=%s',
+        log.info('Creating forward zone: %s server=%s',
                  cfg.ddns_forward_zone, cfg.ddns_domainprimary)
-        resp = self.api.add_ddns_domain(domain_data)
-        self._check_response(resp, 'add DDNS domain')
+        resp = self.api.add_forward_zone(zone_data)
+        self._check_response(resp, 'add forward zone')
         uuid = resp.get('uuid', '')
-        log.info('Created DDNS domain uuid=%s', uuid)
+        log.info('Created forward zone uuid=%s', uuid)
         return uuid
 
-    def _create_subnet(self, cfg: DhcpInterfaceConfig, ddns_domain_uuid: str) -> str:
+    def _ensure_reverse_zone(self, cfg: DhcpInterfaceConfig, key_uuid: str,
+                             reverse_zone: str) -> str:
+        """Find or create the reverse DNS zone. Returns UUID."""
+        if not reverse_zone:
+            # Derive from subnet: 10.0.10.0/24 -> 10.0.10.in-addr.arpa
+            net = ipaddress.IPv4Network(cfg.subnet, strict=False)
+            prefix_len = net.prefixlen
+            octets = str(net.network_address).split('.')
+            if prefix_len >= 24:
+                reverse_zone = f'{octets[2]}.{octets[1]}.{octets[0]}.in-addr.arpa'
+            elif prefix_len >= 16:
+                reverse_zone = f'{octets[1]}.{octets[0]}.in-addr.arpa'
+            else:
+                reverse_zone = f'{octets[0]}.in-addr.arpa'
+
+        if self.dry_run:
+            log.info('[DRY RUN] Would ensure reverse zone: %s server=%s',
+                     reverse_zone, cfg.ddns_domainprimary)
+            return 'dry-run-rev-zone-uuid'
+
+        existing = self.api.search_reverse_zones()
+        for row in existing:
+            if row.get('name') == reverse_zone:
+                log.info('Reverse zone %r already exists (uuid=%s)',
+                         reverse_zone, row['uuid'])
+                return row['uuid']
+
+        zone_data = {
+            'name': reverse_zone,
+            'server': cfg.ddns_domainprimary,
+            'port': '53',
+            'tsig_key': key_uuid,
+        }
+
+        log.info('Creating reverse zone: %s server=%s',
+                 reverse_zone, cfg.ddns_domainprimary)
+        resp = self.api.add_reverse_zone(zone_data)
+        self._check_response(resp, 'add reverse zone')
+        uuid = resp.get('uuid', '')
+        log.info('Created reverse zone uuid=%s', uuid)
+        return uuid
+
+    def _create_subnet(self, cfg: DhcpInterfaceConfig) -> str:
         """Create the Kea subnet. Returns UUID."""
         pool = f'{cfg.range_from} - {cfg.range_to}' if cfg.range_from and cfg.range_to else ''
 
@@ -500,24 +557,10 @@ class KeaMigrator:
         if cfg.ntp_servers:
             subnet_data['option_data']['ntp_servers'] = ','.join(cfg.ntp_servers)
 
-        # DDNS
-        if ddns_domain_uuid:
-            subnet_data['ddns_domain'] = ddns_domain_uuid
-            if cfg.ddns_prefix:
-                subnet_data['ddns_prefix_type'] = 'custom'
-                subnet_data['ddns_prefix_custom'] = cfg.ddns_prefix
-            else:
-                subnet_data['ddns_prefix_type'] = 'none'
-
         if self.dry_run:
             log.info('[DRY RUN] Would create subnet: %s', cfg.subnet)
             log.info('[DRY RUN]   Pool: %s', pool)
             log.info('[DRY RUN]   Options: %s', subnet_data.get('option_data', {}))
-            if ddns_domain_uuid:
-                log.info('[DRY RUN]   DDNS domain: %s, prefix_type=%s, prefix=%s',
-                         ddns_domain_uuid,
-                         subnet_data.get('ddns_prefix_type', ''),
-                         subnet_data.get('ddns_prefix_custom', ''))
             return 'dry-run-subnet-uuid'
 
         log.info('Creating subnet: %s (pool: %s)', cfg.subnet, pool)
@@ -526,6 +569,29 @@ class KeaMigrator:
         uuid = resp.get('uuid', '')
         log.info('Created subnet uuid=%s', uuid)
         return uuid
+
+    def _create_subnet_ddns(self, cfg: DhcpInterfaceConfig, subnet_uuid: str,
+                            fwd_zone_uuid: str):
+        """Create subnet DDNS assignment linking subnet to forward zone."""
+        qualifying_suffix = f'{cfg.ddns_domainname}.' if cfg.ddns_domainname else ''
+
+        if self.dry_run:
+            log.info('[DRY RUN] Would create subnet DDNS assignment: subnet=%s zone=%s suffix=%s',
+                     cfg.subnet, cfg.ddns_forward_zone, qualifying_suffix)
+            return
+
+        assignment_data = {
+            'subnet': subnet_uuid,
+            'forward_zone': fwd_zone_uuid,
+            'qualifying_suffix': qualifying_suffix,
+            'send_updates': '1',
+        }
+
+        log.info('Creating subnet DDNS assignment: subnet=%s zone=%s suffix=%s',
+                 cfg.subnet, cfg.ddns_forward_zone, qualifying_suffix)
+        resp = self.api.add_subnet_ddns(assignment_data)
+        self._check_response(resp, 'add subnet DDNS assignment')
+        log.info('Created subnet DDNS assignment uuid=%s', resp.get('uuid', ''))
 
     def _create_reservations(self, cfg: DhcpInterfaceConfig, subnet_uuid: str):
         """Create static reservations for the subnet."""
