@@ -10,6 +10,11 @@ mechanism to inject DDNS parameters into kea-dhcp4.conf and kea-dhcp6.conf.
 Plugin Changelog
 ================
 
+1.2
+
+Added:
+* Per-subnet ddns-replace-client-name option for both DHCPv4 and DHCPv6
+
 1.1
 
 Added:

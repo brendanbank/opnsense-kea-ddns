@@ -1,6 +1,6 @@
 <model>
     <mount>//OPNsense/KeaDdns</mount>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
     <description>Kea DHCP-DDNS Configuration</description>
     <items>
         <general>
@@ -141,6 +141,16 @@
                     <Required>Y</Required>
                 </send_updates>
                 <update_on_renew type="BooleanField"/>
+                <replace_client_name type="OptionField">
+                    <Default>never</Default>
+                    <Required>Y</Required>
+                    <OptionValues>
+                        <never>Never</never>
+                        <always>Always</always>
+                        <when-present>When present</when-present>
+                        <when-not-present>When not present</when-not-present>
+                    </OptionValues>
+                </replace_client_name>
                 <conflict_resolution type="OptionField">
                     <Default>check-with-dhcid</Default>
                     <Required>Y</Required>
@@ -184,6 +194,16 @@
                     <Required>Y</Required>
                 </send_updates>
                 <update_on_renew type="BooleanField"/>
+                <replace_client_name type="OptionField">
+                    <Default>never</Default>
+                    <Required>Y</Required>
+                    <OptionValues>
+                        <never>Never</never>
+                        <always>Always</always>
+                        <when-present>When present</when-present>
+                        <when-not-present>When not present</when-not-present>
+                    </OptionValues>
+                </replace_client_name>
                 <conflict_resolution type="OptionField">
                     <Default>check-with-dhcid</Default>
                     <Required>Y</Required>

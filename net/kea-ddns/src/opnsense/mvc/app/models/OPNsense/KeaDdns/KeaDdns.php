@@ -153,6 +153,7 @@ class KeaDdns extends BaseModel
                 'ddns-send-updates' => $assignment->send_updates->isEqual('1'),
                 'ddns-update-on-renew' => $assignment->update_on_renew->isEqual('1'),
                 'ddns-conflict-resolution-mode' => $assignment->conflict_resolution->getValue(),
+                'ddns-replace-client-name' => $assignment->replace_client_name->getValue(),
             ];
             if (!$assignment->qualifying_suffix->isEmpty()) {
                 $suffix = $assignment->qualifying_suffix->getValue();
@@ -204,6 +205,7 @@ class KeaDdns extends BaseModel
                 'ddns-send-updates' => $assignment->send_updates->isEqual('1'),
                 'ddns-update-on-renew' => $assignment->update_on_renew->isEqual('1'),
                 'ddns-conflict-resolution-mode' => $assignment->conflict_resolution->getValue(),
+                'ddns-replace-client-name' => $assignment->replace_client_name->getValue(),
             ];
             if (!$assignment->qualifying_suffix->isEmpty()) {
                 $suffix = $assignment->qualifying_suffix->getValue();

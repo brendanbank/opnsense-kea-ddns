@@ -45,6 +45,15 @@
         </grid_view>
     </field>
     <field>
+        <id>assignment.replace_client_name</id>
+        <label>Replace client name</label>
+        <type>dropdown</type>
+        <help>Controls whether Kea replaces the client-sent hostname. 'Always' forces use of the qualifying suffix.</help>
+        <grid_view>
+            <visible>false</visible>
+        </grid_view>
+    </field>
+    <field>
         <id>assignment.conflict_resolution</id>
         <label>Conflict resolution</label>
         <type>dropdown</type>
