@@ -20,30 +20,41 @@ PATCH_FILE="$REPO_DIR/core-patches/0001-kea-add-plugins_run-hooks-for-DDNS-plugi
 
 KEA_INC="$CORE_SRC/etc/inc/plugins.inc.d/kea.inc"
 KEA_DHCPV4="$CORE_SRC/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv4.php"
+KEA_DHCPV6="$CORE_SRC/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv6.php"
 
-# Check if hooks are already present
-if grep -q 'kea_ddns_generate' "$KEA_INC" 2>/dev/null; then
+# Check if hooks are already present (all three files must be patched)
+if grep -q 'kea_ddns_generate' "$KEA_INC" 2>/dev/null && \
+   grep -q 'kea_dhcpv4_config' "$KEA_DHCPV4" 2>/dev/null && \
+   grep -q 'kea_dhcpv6_config' "$KEA_DHCPV6" 2>/dev/null; then
     echo "    Core hooks already applied, skipping patch."
 else
     echo "==> Applying core hooks patch..."
-    # Apply the patch relative to the src/ prefix used in core
+    # The git-format patch has paths like a/src/etc/... — strip=2 removes both a/ and src/
+    # Use --forward to skip already-applied hunks (partial upgrade case)
     cd "$CORE_SRC"
-    patch --forward --strip=1 --dry-run < "$PATCH_FILE" || {
-        echo "ERROR: Patch does not apply cleanly to this OPNsense version."
-        echo "You may need to apply the patch manually."
-        echo "Files to patch:"
-        echo "  - $KEA_INC"
-        echo "  - $KEA_DHCPV4"
+    patch --forward --strip=2 < "$PATCH_FILE" || true
+    # Verify all three hooks are present after patching
+    PATCH_OK=true
+    grep -q 'kea_ddns_generate' "$KEA_INC" 2>/dev/null || PATCH_OK=false
+    grep -q 'kea_dhcpv4_config' "$KEA_DHCPV4" 2>/dev/null || PATCH_OK=false
+    grep -q 'kea_dhcpv6_config' "$KEA_DHCPV6" 2>/dev/null || PATCH_OK=false
+    if [ "$PATCH_OK" = "true" ]; then
+        echo "    Core hooks applied successfully."
+    else
+        echo "ERROR: Core patch incomplete. Missing hooks in:"
+        grep -q 'kea_ddns_generate' "$KEA_INC" 2>/dev/null || echo "  - $KEA_INC"
+        grep -q 'kea_dhcpv4_config' "$KEA_DHCPV4" 2>/dev/null || echo "  - $KEA_DHCPV4"
+        grep -q 'kea_dhcpv6_config' "$KEA_DHCPV6" 2>/dev/null || echo "  - $KEA_DHCPV6"
         exit 1
-    }
-    patch --forward --strip=1 < "$PATCH_FILE"
-    echo "    Core hooks applied successfully."
+    fi
 fi
 
 # --- Step 2: Install plugin files ---
 echo "==> Installing kea-ddns plugin files..."
 PLUGIN_SRC="$REPO_DIR/net/kea-ddns/src"
 cp -R "$PLUGIN_SRC/etc/inc/plugins.inc.d/kea_ddns.inc" "$CORE_SRC/etc/inc/plugins.inc.d/"
+mkdir -p "$CORE_SRC/opnsense/data/kea-ddns/patches"
+cp -R "$PLUGIN_SRC/opnsense/data/kea-ddns/patches/"* "$CORE_SRC/opnsense/data/kea-ddns/patches/"
 cp -R "$PLUGIN_SRC/opnsense/mvc/app/controllers/OPNsense/KeaDdns" "$CORE_SRC/opnsense/mvc/app/controllers/OPNsense/"
 cp -R "$PLUGIN_SRC/opnsense/mvc/app/models/OPNsense/KeaDdns" "$CORE_SRC/opnsense/mvc/app/models/OPNsense/"
 cp -R "$PLUGIN_SRC/opnsense/mvc/app/views/OPNsense/KeaDdns" "$CORE_SRC/opnsense/mvc/app/views/OPNsense/"

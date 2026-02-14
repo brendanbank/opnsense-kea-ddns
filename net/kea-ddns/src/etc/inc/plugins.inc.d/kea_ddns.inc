@@ -33,6 +33,7 @@ function kea_ddns_run()
 
     return [
         'kea_dhcpv4_config' => 'kea_ddns_get_dhcpv4_overlay',
+        'kea_dhcpv6_config' => 'kea_ddns_get_dhcpv6_overlay',
         'kea_ddns_generate' => 'kea_ddns_generate_config',
     ];
 }
@@ -40,7 +41,11 @@ function kea_ddns_run()
 function kea_ddns_check_core_patch()
 {
     $kea_inc = '/usr/local/etc/inc/plugins.inc.d/kea.inc';
-    if (strpos(@file_get_contents($kea_inc), 'kea_ddns_generate') !== false) {
+    $keav6_php = '/usr/local/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv6.php';
+    if (
+        strpos(@file_get_contents($kea_inc), 'kea_ddns_generate') !== false &&
+        strpos(@file_get_contents($keav6_php), 'kea_dhcpv6_config') !== false
+    ) {
         return;
     }
 
@@ -83,6 +88,15 @@ function kea_ddns_get_dhcpv4_overlay()
         return [];
     }
     return $mdl->getDhcpv4Overlay();
+}
+
+function kea_ddns_get_dhcpv6_overlay()
+{
+    $mdl = new \OPNsense\KeaDdns\KeaDdns();
+    if (!$mdl->general->enabled->isEqual('1')) {
+        return [];
+    }
+    return $mdl->getDhcpv6Overlay();
 }
 
 function kea_ddns_generate_config()

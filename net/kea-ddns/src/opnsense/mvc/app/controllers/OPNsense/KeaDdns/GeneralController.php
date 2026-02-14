@@ -41,9 +41,11 @@ class GeneralController extends IndexController
         $this->view->formDialogForwardZone = $this->getForm('dialogForwardZone');
         $this->view->formDialogReverseZone = $this->getForm('dialogReverseZone');
         $this->view->formDialogSubnetDdns = $this->getForm('dialogSubnetDdns');
+        $this->view->formDialogSubnet6Ddns = $this->getForm('dialogSubnet6Ddns');
         $this->view->formGridTsigKey = $this->getFormGrid('dialogTsigKey', 'gridTsigKeys');
         $this->view->formGridForwardZone = $this->getFormGrid('dialogForwardZone', 'gridForwardZones');
         $this->view->formGridReverseZone = $this->getFormGrid('dialogReverseZone', 'gridReverseZones');
         $this->view->formGridSubnetDdns = $this->getFormGrid('dialogSubnetDdns', 'gridSubnetDdns');
+        $this->view->formGridSubnet6Ddns = $this->getFormGrid('dialogSubnet6Ddns', 'gridSubnet6Ddns');
     }
 }

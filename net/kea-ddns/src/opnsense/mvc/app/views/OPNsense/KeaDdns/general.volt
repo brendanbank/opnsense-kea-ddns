@@ -37,6 +37,14 @@
             del:'/api/keaddns/general/delSubnetDdns/'
         });
 
+        $("#gridSubnet6Ddns").UIBootgrid({
+            search:'/api/keaddns/general/searchSubnet6Ddns',
+            get:'/api/keaddns/general/getSubnet6Ddns/',
+            set:'/api/keaddns/general/setSubnet6Ddns/',
+            add:'/api/keaddns/general/addSubnet6Ddns/',
+            del:'/api/keaddns/general/delSubnet6Ddns/'
+        });
+
         $("#reconfigureAct").SimpleActionButton({
             onPreAction: function() {
                 const dfObj = new $.Deferred();
@@ -60,6 +68,7 @@
     <li><a data-toggle="tab" href="#forward-zones" id="tab_forward">{{ lang._('Forward Zones') }}</a></li>
     <li><a data-toggle="tab" href="#reverse-zones" id="tab_reverse">{{ lang._('Reverse Zones') }}</a></li>
     <li><a data-toggle="tab" href="#subnet-ddns" id="tab_subnet">{{ lang._('Subnet DDNS') }}</a></li>
+    <li><a data-toggle="tab" href="#subnet6-ddns" id="tab_subnet6">{{ lang._('Subnet6 DDNS') }}</a></li>
 </ul>
 <div class="tab-content content-box">
     <div id="settings" class="tab-pane fade in active">
@@ -76,6 +85,9 @@
     </div>
     <div id="subnet-ddns" class="tab-pane fade in">
         {{ partial('layout_partials/base_bootgrid_table', formGridSubnetDdns)}}
+    </div>
+    <div id="subnet6-ddns" class="tab-pane fade in">
+        {{ partial('layout_partials/base_bootgrid_table', formGridSubnet6Ddns)}}
     </div>
 </div>
 
@@ -98,3 +110,4 @@
 {{ partial("layout_partials/base_dialog",['fields':formDialogForwardZone,'id':formGridForwardZone['edit_dialog_id'],'label':lang._('Edit Forward Zone')])}}
 {{ partial("layout_partials/base_dialog",['fields':formDialogReverseZone,'id':formGridReverseZone['edit_dialog_id'],'label':lang._('Edit Reverse Zone')])}}
 {{ partial("layout_partials/base_dialog",['fields':formDialogSubnetDdns,'id':formGridSubnetDdns['edit_dialog_id'],'label':lang._('Edit Subnet DDNS')])}}
+{{ partial("layout_partials/base_dialog",['fields':formDialogSubnet6Ddns,'id':formGridSubnet6Ddns['edit_dialog_id'],'label':lang._('Edit Subnet6 DDNS')])}}

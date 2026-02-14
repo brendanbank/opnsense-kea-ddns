@@ -4,10 +4,13 @@
 KEA_DIR="/usr/local/etc/kea"
 KEA_INC="/usr/local/etc/inc/plugins.inc.d/kea.inc"
 KEA_DHCPV4_PHP="/usr/local/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv4.php"
+KEA_DHCPV6_PHP="/usr/local/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv6.php"
 KEA4_CONF="$KEA_DIR/kea-dhcp4.conf"
+KEA6_CONF="$KEA_DIR/kea-dhcp6.conf"
 DDNS_CONF="$KEA_DIR/kea-dhcp-ddns.conf"
 KEACTRL_CONF="$KEA_DIR/keactrl.conf"
 KEA4_SOCK="/var/run/kea/kea4-ctrl-socket"
+KEA6_SOCK="/var/run/kea/kea6-ctrl-socket"
 DDNS_SOCK="/var/run/kea/kea-ddns-ctrl-socket"
 
 RESULTS_FILE=$(mktemp)

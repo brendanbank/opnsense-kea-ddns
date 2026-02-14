@@ -1,13 +1,21 @@
 Adds Dynamic DNS (DDNS) support for the Kea DHCP server.
 
 Manages the kea-dhcp-ddns daemon configuration including TSIG keys,
-forward and reverse DNS zones, and per-subnet DDNS policy settings.
+forward and reverse DNS zones, and per-subnet DDNS policy settings
+for both DHCPv4 and DHCPv6.
 
 Integrates with the core Kea DHCP plugin via the plugins_run() hook
-mechanism to inject DDNS parameters into kea-dhcp4.conf.
+mechanism to inject DDNS parameters into kea-dhcp4.conf and kea-dhcp6.conf.
 
 Plugin Changelog
 ================
+
+1.1
+
+Added:
+* DHCPv6 DDNS support — per-subnet6 DDNS policy and overlay injection into kea-dhcp6.conf
+* Subnet6 DDNS tab in the UI for managing DHCPv6 DDNS assignments
+* Core patch now also hooks KeaDhcpv6.php (kea_dhcpv6_config)
 
 1.0
 

@@ -10,6 +10,15 @@ for daemon in kea-dhcp4 kea-dhcp-ddns kea-ctrl-agent; do
     fi
 done
 
+# kea-dhcp6 is optional — only test if DHCPv6 is enabled and configured
+if [ "$KEA6_VALID" = "true" ]; then
+    if pgrep -x "kea-dhcp6" >/dev/null 2>&1; then
+        pass "Daemon: kea-dhcp6 is running"
+    else
+        fail "Daemon: kea-dhcp6 is not running"
+    fi
+fi
+
 # --- 7. Kea control sockets responsive ---
 KEA4_STATUS=$(kea_command "$KEA4_SOCK" '{"command": "status-get"}')
 if echo "$KEA4_STATUS" | jq -e '.result == 0' >/dev/null 2>&1; then
@@ -23,6 +32,16 @@ if echo "$DDNS_STATUS" | jq -e '.result == 0' >/dev/null 2>&1; then
     pass "Control socket: kea-dhcp-ddns responds to status-get"
 else
     fail "Control socket: kea-dhcp-ddns not responding"
+fi
+
+# kea-dhcp6 control socket (optional)
+if [ "$KEA6_VALID" = "true" ]; then
+    KEA6_STATUS=$(kea_command "$KEA6_SOCK" '{"command": "status-get"}')
+    if echo "$KEA6_STATUS" | jq -e '.result == 0' >/dev/null 2>&1; then
+        pass "Control socket: kea-dhcp6 responds to status-get"
+    else
+        fail "Control socket: kea-dhcp6 not responding"
+    fi
 fi
 
 # --- 8. Active leases have DDNS flags ---

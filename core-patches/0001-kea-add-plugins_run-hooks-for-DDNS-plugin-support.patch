@@ -3,14 +3,16 @@ From: Brendan Bank <brendan.bank@gmail.com>
 Date: Fri, 13 Feb 2026 08:21:06 +0100
 Subject: [PATCH] kea: add plugins_run hooks for DDNS plugin support
 
-Add two hook points to allow a plugin to inject DDNS configuration:
+Add three hook points to allow a plugin to inject DDNS configuration:
 - kea_dhcpv4_config: overlay per-subnet DDNS params into kea-dhcp4.conf
+- kea_dhcpv6_config: overlay per-subnet DDNS params into kea-dhcp6.conf
 - kea_ddns_generate: generate kea-dhcp-ddns.conf and toggle keactrl
 Also add kea-dhcp-ddns to syslog facilities.
 ---
  src/etc/inc/plugins.inc.d/kea.inc                | 16 +++++++++++++++-
  .../mvc/app/models/OPNsense/Kea/KeaDhcpv4.php    | 14 ++++++++++++++
- 2 files changed, 29 insertions(+), 1 deletion(-)
+ .../mvc/app/models/OPNsense/Kea/KeaDhcpv6.php    | 14 ++++++++++++++
+ 3 files changed, 43 insertions(+), 1 deletion(-)
 
 diff --git a/src/etc/inc/plugins.inc.d/kea.inc b/src/etc/inc/plugins.inc.d/kea.inc
 index 654387e12..957639af8 100644
@@ -71,6 +73,31 @@ index f7f8e2164..615a6e5c0 100644
          File::file_put_contents($target, json_encode($cnf, JSON_PRETTY_PRINT), 0600);
      }
  }
--- 
+diff --git a/src/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv6.php b/src/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv6.php
+index 1234567..abcdef0 100644
+--- a/src/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv6.php
++++ b/src/opnsense/mvc/app/models/OPNsense/Kea/KeaDhcpv6.php
+@@ -323,6 +323,20 @@ class KeaDhcpv6 extends BaseModel
+                 $cnf['Dhcp6']['hooks-libraries'][] = $record;
+             }
+         }
++        /* allow plugins to overlay config (e.g. DDNS parameters) */
++        foreach (plugins_run('kea_dhcpv6_config') as $overlay) {
++            if (isset($overlay['global'])) {
++                $cnf['Dhcp6'] = array_merge($cnf['Dhcp6'], $overlay['global']);
++            }
++            if (isset($overlay['subnets'])) {
++                foreach ($cnf['Dhcp6']['subnet6'] as &$subnet) {
++                    if (isset($overlay['subnets'][$subnet['subnet']])) {
++                        $subnet = array_merge($subnet, $overlay['subnets'][$subnet['subnet']]);
++                    }
++                }
++                unset($subnet);
++            }
++        }
+         File::file_put_contents($target, json_encode($cnf, JSON_PRETTY_PRINT), 0600);
+     }
+ }
+--
 2.50.1 (Apple Git-155)
 

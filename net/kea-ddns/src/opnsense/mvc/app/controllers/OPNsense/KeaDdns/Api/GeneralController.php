@@ -102,7 +102,7 @@ class GeneralController extends ApiMutableModelControllerBase
         return $this->delBase('reverse_zones.zone', $uuid);
     }
 
-    /* Subnet DDNS assignments */
+    /* Subnet DDNS assignments (DHCPv4) */
     public function searchSubnetDdnsAction()
     {
         return $this->searchBase('subnet_ddns.assignment', null, 'subnet');
@@ -122,5 +122,27 @@ class GeneralController extends ApiMutableModelControllerBase
     public function delSubnetDdnsAction($uuid)
     {
         return $this->delBase('subnet_ddns.assignment', $uuid);
+    }
+
+    /* Subnet6 DDNS assignments (DHCPv6) */
+    public function searchSubnet6DdnsAction()
+    {
+        return $this->searchBase('subnet6_ddns.assignment', null, 'subnet');
+    }
+    public function getSubnet6DdnsAction($uuid = null)
+    {
+        return $this->getBase('assignment', 'subnet6_ddns.assignment', $uuid);
+    }
+    public function addSubnet6DdnsAction()
+    {
+        return $this->addBase('assignment', 'subnet6_ddns.assignment');
+    }
+    public function setSubnet6DdnsAction($uuid)
+    {
+        return $this->setBase('assignment', 'subnet6_ddns.assignment', $uuid);
+    }
+    public function delSubnet6DdnsAction($uuid)
+    {
+        return $this->delBase('subnet6_ddns.assignment', $uuid);
     }
 }

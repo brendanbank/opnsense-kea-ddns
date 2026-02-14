@@ -117,6 +117,57 @@ class KeaDdns extends BaseModel
     }
 
     /**
+     * Return the overlay array that core's generateConfig() merges into kea-dhcp6.conf.
+     * Keyed by subnet CIDR string.
+     */
+    public function getDhcpv6Overlay()
+    {
+        $result = [
+            'global' => [
+                'dhcp-ddns' => [
+                    'enable-updates' => true,
+                    'server-ip' => '127.0.0.1',
+                    'server-port' => 53001,
+                ],
+                'hostname-char-set' => '[^A-Za-z0-9.-]',
+                'hostname-char-replacement' => '-',
+            ],
+            'subnets' => [],
+        ];
+
+        /* resolve subnet UUIDs to CIDR strings */
+        $keav6 = new \OPNsense\Kea\KeaDhcpv6();
+        $subnetCidrMap = [];
+        foreach ($keav6->subnets->subnet6->iterateItems() as $uuid => $subnet) {
+            $subnetCidrMap[$uuid] = $subnet->subnet->getValue();
+        }
+
+        foreach ($this->subnet6_ddns->assignment->iterateItems() as $assignment) {
+            $subnetUuid = (string)$assignment->subnet;
+            if (empty($subnetUuid) || !isset($subnetCidrMap[$subnetUuid])) {
+                continue;
+            }
+            $cidr = $subnetCidrMap[$subnetUuid];
+
+            $entry = [
+                'ddns-send-updates' => $assignment->send_updates->isEqual('1'),
+                'ddns-update-on-renew' => $assignment->update_on_renew->isEqual('1'),
+                'ddns-conflict-resolution-mode' => $assignment->conflict_resolution->getValue(),
+            ];
+            if (!$assignment->qualifying_suffix->isEmpty()) {
+                $suffix = $assignment->qualifying_suffix->getValue();
+                if (substr($suffix, -1) !== '.') {
+                    $suffix .= '.';
+                }
+                $entry['ddns-qualifying-suffix'] = $suffix;
+            }
+            $result['subnets'][$cidr] = $entry;
+        }
+
+        return $result;
+    }
+
+    /**
      * Return the overlay array that core's generateConfig() merges into kea-dhcp4.conf.
      * Keyed by subnet CIDR string.
      */
