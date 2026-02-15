@@ -41,8 +41,10 @@ echo ""
 echo "==> Build complete. Package:"
 ls -la work/pkg/*.pkg 2>/dev/null || echo "ERROR: No package found in work/pkg/"
 
-# Update local pkg repo if it exists
-PKG_REPO="$HOME/pkg-repo"
+# Update local pkg repo if it exists (use repo owner's home, not root's)
+REPO_OWNER=$(stat -f '%Su' "$REPO_ROOT" 2>/dev/null)
+OWNER_HOME=$(eval echo "~${REPO_OWNER}" 2>/dev/null)
+PKG_REPO="${OWNER_HOME:-$HOME}/pkg-repo"
 if [ -d "$PKG_REPO" ]; then
     PLUGIN_VERSION=$(sed -n 's/^PLUGIN_VERSION=[[:space:]]*//p' "$REPO_ROOT/net/kea-ddns/Makefile")
     BUILT_PKG=$(ls work/pkg/os-kea-ddns*-${PLUGIN_VERSION}.pkg 2>/dev/null | head -1)
