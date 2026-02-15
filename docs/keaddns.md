@@ -40,8 +40,8 @@ tsig-keygen -a hmac-sha256 ddns-key.example.com
 This plugin is not available via the OPNsense package repository. Download the latest release package from [GitHub](https://github.com/brendanbank/opnsense-kea-ddns/releases) and install it on your firewall:
 
 ```
-curl -LO https://github.com/brendanbank/opnsense-kea-ddns/releases/download/v1.2/os-kea-ddns-1.2.pkg
-pkg install os-kea-ddns-1.2.pkg
+curl -LO https://github.com/brendanbank/opnsense-kea-ddns/releases/download/v1.3/os-kea-ddns-1.3.pkg
+pkg install os-kea-ddns-1.3.pkg
 ```
 
 Replace the version number with the latest available release.

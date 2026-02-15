@@ -40,3 +40,17 @@ make package
 echo ""
 echo "==> Build complete. Package:"
 ls -la work/pkg/*.pkg 2>/dev/null || echo "ERROR: No package found in work/pkg/"
+
+PLUGIN_VERSION=$(sed -n 's/^PLUGIN_VERSION=[[:space:]]*//p' "$REPO_ROOT/net/kea-ddns/Makefile")
+BUILT_PKG=$(ls work/pkg/os-kea-ddns*-${PLUGIN_VERSION}.pkg 2>/dev/null | head -1)
+
+# Update GitHub Pages pkg repo
+PAGES_REPO="$REPO_ROOT/docs/repo"
+if [ -d "$PAGES_REPO" ] && [ -n "$BUILT_PKG" ]; then
+    echo ""
+    echo "==> Updating GitHub Pages pkg repo at $PAGES_REPO..."
+    rm -f "$PAGES_REPO"/os-kea-ddns*.pkg
+    cp "$BUILT_PKG" "$PAGES_REPO/"
+    pkg repo "$PAGES_REPO/"
+    echo "    Commit and push docs/repo/ to update GitHub Pages."
+fi

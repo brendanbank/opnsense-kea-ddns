@@ -1,3 +1,25 @@
+# Register plugin with firmware (needed for pkg install outside of the UI)
+REGISTER="/usr/local/opnsense/scripts/firmware/register.php"
+VERSION_INFO="/usr/local/opnsense/version/kea-ddns"
+if [ -f "$REGISTER" ] && [ -f "$VERSION_INFO" ]; then
+    PLUGIN_ID=$(sed -n 's/.*"product_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$VERSION_INFO")
+    if [ -n "$PLUGIN_ID" ]; then
+        $REGISTER install "$PLUGIN_ID"
+    fi
+fi
+
+# Add GitHub Pages pkg repo for UI plugin details (pkg rquery needs a remote repo)
+REPO_CONF="/usr/local/etc/pkg/repos/opnsense-kea-ddns.conf"
+if [ ! -f "$REPO_CONF" ]; then
+    cat > "$REPO_CONF" <<REPOEOF
+opnsense-kea-ddns: {
+  url: "https://brendanbank.github.io/opnsense-kea-ddns/repo",
+  enabled: yes
+}
+REPOEOF
+    pkg update -f -r opnsense-kea-ddns
+fi
+
 KEA_INC="/usr/local/etc/inc/plugins.inc.d/kea.inc"
 VERSION_FILE="/usr/local/opnsense/version/core"
 PATCH_DIR="/usr/local/opnsense/data/kea-ddns/patches"

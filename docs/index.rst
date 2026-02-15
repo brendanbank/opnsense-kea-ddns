@@ -1,3 +1,6 @@
+KEA DDNS
+========
+
 .. toctree::
 
    keaddns
