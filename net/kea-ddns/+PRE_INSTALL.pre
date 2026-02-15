@@ -1,0 +1,26 @@
+VERSION_FILE="/usr/local/opnsense/version/core"
+PATCH_DIR="/usr/local/opnsense/data/kea-ddns/patches"
+
+# detect OPNsense series
+SERIES=""
+if [ -f "$VERSION_FILE" ]; then
+    SERIES=$(sed -n 's/.*"product_series"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$VERSION_FILE")
+fi
+
+if [ -z "$SERIES" ]; then
+    exit 0
+fi
+
+PATCH="$PATCH_DIR/$SERIES.patch"
+
+if [ ! -f "$PATCH" ]; then
+    exit 0
+fi
+
+# Reverse the currently applied patch before the new package overwrites
+# the patch files. POST_INSTALL will apply the (possibly updated) patch.
+if grep -q 'kea_ddns_generate' /usr/local/etc/inc/plugins.inc.d/kea.inc 2>/dev/null; then
+    echo "Reversing kea-ddns core hooks patch before upgrade..."
+    cd /usr/local && patch --reverse --strip=1 < "$PATCH" 2>/dev/null || \
+        echo "NOTE: Core patch could not be reversed (may already be removed or OPNsense was updated)."
+fi

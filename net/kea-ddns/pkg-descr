@@ -10,10 +10,20 @@ mechanism to inject DDNS parameters into kea-dhcp4.conf and kea-dhcp6.conf.
 Plugin Changelog
 ================
 
+1.3
+
+Added:
+* GitHub Pages pkg repo for UI plugin details
+* Register/deregister plugin with firmware on install/remove
+* Build script improvements (auto-update GitHub Pages repo)
+
 1.2
 
 Added:
 * Per-subnet ddns-replace-client-name option for both DHCPv4 and DHCPv6
+* Documentation with Sphinx HTML and Markdown generation
+* Updated README for DHCPv6 support and pkg install instructions
+* Pre-install hook to reverse core patch before upgrade
 
 1.1
 
@@ -32,4 +42,4 @@ Added:
 * kea-dhcp-ddns daemon configuration generation
 * Log file viewer for kea-dhcp-ddns
 
-WWW: https://github.com/brendanbank/opnsense-kea-ddns
+WWW: https://brendanbank.github.io/opnsense-kea-ddns/
