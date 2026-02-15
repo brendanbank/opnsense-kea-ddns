@@ -1,3 +1,13 @@
+# Deregister plugin from firmware
+REGISTER="/usr/local/opnsense/scripts/firmware/register.php"
+VERSION_INFO="/usr/local/opnsense/version/kea-ddns"
+if [ -f "$REGISTER" ] && [ -f "$VERSION_INFO" ]; then
+    PLUGIN_ID=$(sed -n 's/.*"product_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$VERSION_INFO")
+    if [ -n "$PLUGIN_ID" ]; then
+        $REGISTER remove "$PLUGIN_ID"
+    fi
+fi
+
 VERSION_FILE="/usr/local/opnsense/version/core"
 PATCH_DIR="/usr/local/opnsense/data/kea-ddns/patches"
 
