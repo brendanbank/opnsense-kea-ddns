@@ -40,3 +40,18 @@ make package
 echo ""
 echo "==> Build complete. Package:"
 ls -la work/pkg/*.pkg 2>/dev/null || echo "ERROR: No package found in work/pkg/"
+
+# Update local pkg repo if it exists
+PKG_REPO="$HOME/pkg-repo"
+if [ -d "$PKG_REPO" ]; then
+    PLUGIN_VERSION=$(sed -n 's/^PLUGIN_VERSION=[[:space:]]*//p' "$REPO_ROOT/net/kea-ddns/Makefile")
+    BUILT_PKG=$(ls work/pkg/os-kea-ddns*-${PLUGIN_VERSION}.pkg 2>/dev/null | head -1)
+    if [ -n "$BUILT_PKG" ]; then
+        echo ""
+        echo "==> Updating local pkg repo at $PKG_REPO..."
+        rm -f "$PKG_REPO"/os-kea-ddns*.pkg
+        cp "$BUILT_PKG" "$PKG_REPO/"
+        pkg repo "$PKG_REPO/"
+        echo "    Run 'sudo pkg update -f' to refresh the catalogue."
+    fi
+fi
