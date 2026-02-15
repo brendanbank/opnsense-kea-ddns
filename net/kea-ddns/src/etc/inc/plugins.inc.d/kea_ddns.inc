@@ -72,12 +72,18 @@ function kea_ddns_check_core_patch()
         return;
     }
 
-    syslog(LOG_NOTICE, sprintf('kea-ddns: core patch missing, re-applying for OPNsense %s', $series));
+    syslog(LOG_NOTICE, sprintf('kea-ddns: core patch missing, testing patch for OPNsense %s', $series));
+    $dry = mwexec(sprintf('/usr/bin/patch --dry-run --forward --strip=1 --directory=/usr/local < %s', escapeshellarg($patch)));
+    if ($dry != 0) {
+        syslog(LOG_ERR, 'kea-ddns: core patch does not apply cleanly, manual intervention required');
+        return;
+    }
+    syslog(LOG_NOTICE, 'kea-ddns: core patch dry-run passed, applying...');
     $ret = mwexec(sprintf('/usr/bin/patch --forward --strip=1 --directory=/usr/local < %s', escapeshellarg($patch)));
     if ($ret == 0) {
         syslog(LOG_NOTICE, 'kea-ddns: core patch applied successfully');
     } else {
-        syslog(LOG_ERR, 'kea-ddns: core patch failed, manual intervention required');
+        syslog(LOG_ERR, 'kea-ddns: core patch failed unexpectedly after dry-run');
     }
 }
 

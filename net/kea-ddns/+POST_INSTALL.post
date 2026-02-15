@@ -43,7 +43,24 @@ if [ ! -f "$PATCH" ]; then
 fi
 
 if ! grep -q 'kea_ddns_generate' "$KEA_INC" 2>/dev/null; then
-    echo "Applying kea-ddns core hooks patch for OPNsense $SERIES..."
-    cd /usr/local && patch --forward --strip=1 < "$PATCH" || \
-        echo "WARNING: Core patch failed. Apply manually: cd /usr/local && patch -p1 < $PATCH"
+    echo "Testing kea-ddns core hooks patch for OPNsense $SERIES..."
+    if cd /usr/local && patch --dry-run --forward --strip=1 < "$PATCH" >/dev/null 2>&1; then
+        echo "Applying kea-ddns core hooks patch..."
+        patch --forward --strip=1 < "$PATCH" || \
+            echo "WARNING: Core patch failed unexpectedly."
+    else
+        echo "WARNING: Core patch does not apply cleanly to this system."
+        echo "         Apply manually: cd /usr/local && patch -p1 < $PATCH"
+        exit 0
+    fi
+fi
+
+# Only reconfigure Kea if core patches are applied
+if grep -q 'kea_ddns_generate' "$KEA_INC" 2>/dev/null; then
+    # Restart configd to pick up patched kea.inc and new kea_ddns.inc
+    /usr/local/etc/rc.d/configd restart
+
+    # Reconfigure and restart Kea to apply DDNS configuration
+    configctl kea reconfigure >/dev/null 2>&1 || :
+    configctl kea restart >/dev/null 2>&1 || :
 fi

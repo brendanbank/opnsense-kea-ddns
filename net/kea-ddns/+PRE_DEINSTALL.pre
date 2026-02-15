@@ -33,5 +33,9 @@ if [ ! -f "$PATCH" ]; then
 fi
 
 echo "Reversing kea-ddns core hooks patch for OPNsense $SERIES..."
-cd /usr/local && patch --reverse --strip=1 < "$PATCH" 2>/dev/null || \
-    echo "NOTE: Core patch could not be reversed (may already be removed or OPNsense was updated)."
+if cd /usr/local && patch --dry-run --reverse --strip=1 < "$PATCH" >/dev/null 2>&1; then
+    patch --reverse --strip=1 < "$PATCH" || \
+        echo "NOTE: Core patch reversal failed unexpectedly."
+else
+    echo "NOTE: Core patch could not be reversed cleanly (OPNsense may have been updated)."
+fi
