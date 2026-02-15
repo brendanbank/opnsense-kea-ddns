@@ -1,5 +1,13 @@
 # opnsense-kea-ddns
 
+> **WARNING:** This plugin patches OPNsense core Kea files to add DDNS hook
+> points. OPNsense firmware upgrades may overwrite these patches, requiring
+> reinstallation. While the plugin auto-applies and reverses patches on
+> install/uninstall, using core patches in production carries inherent risk —
+> future OPNsense updates could change the patched files in incompatible ways,
+> potentially breaking your DHCP configuration. Use at your own risk and always
+> test after OPNsense upgrades.
+
 Kea DHCP-DDNS plugin for OPNsense. Adds Dynamic DNS (RFC 2136) support for the
 Kea DHCP server, enabling automatic DNS registration of DHCPv4 and DHCPv6 leases.
 
