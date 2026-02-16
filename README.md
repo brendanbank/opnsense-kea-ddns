@@ -50,8 +50,8 @@ Download the latest `.pkg` from [GitHub Releases](https://github.com/brendanbank
 and install it on your firewall:
 
 ```sh
-curl -LO https://github.com/brendanbank/opnsense-kea-ddns/releases/download/v1.3.1/os-kea-ddns-1.3.1.pkg
-pkg install os-kea-ddns-1.3.1.pkg
+curl -LO https://github.com/brendanbank/opnsense-kea-ddns/releases/download/v1.3.2/os-kea-ddns-1.3.2.pkg
+pkg install os-kea-ddns-1.3.2.pkg
 ```
 
 Replace the version number with the latest available release.
