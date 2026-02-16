@@ -1,6 +1,7 @@
 _build
 .DS_Store
 __pycache__
+dist
 Keywords
 Mk
 Templates
