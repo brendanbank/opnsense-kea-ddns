@@ -89,6 +89,7 @@ remote "
     for dir in Mk Keywords Templates Scripts; do
         ln -sfn ${REMOTE_PLUGINS}/\$dir \$dir
     done
+    : > ${REMOTE_PLUGINS}/Mk/devel.mk
 "
 
 echo "==> Cleaning previous build"
