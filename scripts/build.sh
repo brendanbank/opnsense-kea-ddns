@@ -59,7 +59,12 @@ verify_removed() {
 echo "==> Building on ${FIREWALL}"
 
 echo "==> Syncing local source to ${FIREWALL}"
-remote "rm -rf ${REMOTE_PLUGIN_DIR}/src && mkdir -p ${REMOTE_PLUGIN_DIR}"
+remote "rm -rf ${REMOTE_PLUGIN_DIR}/src && mkdir -p ${REMOTE_PLUGIN_DIR}
+    if [ ! -d ${REMOTE_REPO}/.git ]; then
+        git -C ${REMOTE_REPO} init -q
+        git -C ${REMOTE_REPO} commit --allow-empty -q -m init
+    fi
+"
 scp -q "${REPO_ROOT}/net/kea-ddns/Makefile" "${FIREWALL}:${REMOTE_PLUGIN_DIR}/"
 scp -q "${REPO_ROOT}/net/kea-ddns/pkg-descr" "${FIREWALL}:${REMOTE_PLUGIN_DIR}/"
 scp -rq "${REPO_ROOT}/net/kea-ddns/src" "${FIREWALL}:${REMOTE_PLUGIN_DIR}/"
